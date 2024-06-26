@@ -1,0 +1,50 @@
+<section class="signup-forms">
+  <form
+    fxLayout="column"
+    fxLayoutAlign="center center"
+    fxLayoutGap="10px"
+    [formGroup]="loginForm"
+  >
+    <mat-form-field>
+      <mat-label>Your email</mat-label>
+      <input
+        matInput
+        autocomplete="nope"
+        type="email"
+        placeholder="Your email"
+        formControlName="email"
+      />
+      @if (email.hasError('required')) {
+      <mat-error>Field must not be empty</mat-error>
+      } @else if (email.hasError('email')) {
+      <mat-error>E-mail is invalid</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Your password</mat-label>
+      <input
+        matInput
+        autocomplete="nope"
+        name="password"
+        type="password"
+        placeholder="Your password"
+        formControlName="password"
+      />
+      <mat-hint align="start">Should be at least 6 characters</mat-hint>
+      <mat-hint align="end">{{ password.value?.length }}/6</mat-hint>
+      @if (password.hasError('required')) {
+      <mat-error>Field must not be empty</mat-error>
+      }
+    </mat-form-field>
+
+    <button
+      type="submit"
+      mat-raised-button
+      color="primary"
+      [disabled]="loginForm.invalid"
+    >
+      Submit
+    </button>
+  </form>
+</section>
