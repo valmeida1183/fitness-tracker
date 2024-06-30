@@ -1,21 +1,17 @@
-import { Component, viewChild } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { FlexLayoutModule } from '@angular/flex-layout';
+import { HeaderComponent } from './navigation/header/header.component';
+import { RouterOutlet } from '@angular/router';
+
+import { SidenavListComponent } from './navigation/sidenav-list/sidenav-list.component';
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     RouterOutlet,
-    RouterLink,
     MatSidenavModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    FlexLayoutModule,
+    SidenavListComponent,
+    HeaderComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

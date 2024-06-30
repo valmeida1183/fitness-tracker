@@ -5,6 +5,11 @@ body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
   height: 100%;
 }
+
 body {
   margin: 0;
+}
+
+html {
+  --mat-dialog-actions-alignment: flex-end;
 }
