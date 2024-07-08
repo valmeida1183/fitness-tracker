@@ -4,6 +4,7 @@
     fxLayoutAlign="center center"
     fxLayoutGap="10px"
     [formGroup]="loginForm"
+    (ngSubmit)="onSubmit()"
   >
     <mat-form-field>
       <mat-label>Your email</mat-label>

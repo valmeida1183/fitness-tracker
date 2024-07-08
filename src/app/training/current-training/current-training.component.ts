@@ -1,9 +1,11 @@
-import { Component, OnInit, inject, output } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FlexLayoutModule } from '@angular/flex-layout';
+
 import { StopTrainingDialogComponent } from './stop-training-dialog/stop-training-dialog.component';
+import { TrainingService } from '../services/training.service';
 
 @Component({
   selector: 'app-current-training',
@@ -15,22 +17,26 @@ import { StopTrainingDialogComponent } from './stop-training-dialog/stop-trainin
 export class CurrentTrainingComponent implements OnInit {
   progress = 0;
   timer!: any;
-  trainingExit = output<void>();
 
-  readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(MatDialog);
+  private readonly trainingService = inject(TrainingService);
 
   ngOnInit(): void {
     this.startTimer();
   }
 
   startTimer(): void {
+    const { duration } = this.trainingService.getRunningExercise();
+    const step = (duration / 100) * 1000;
+
     this.timer = setInterval(() => {
       this.progress = this.progress + 5;
 
       if (this.progress >= 100) {
+        this.trainingService.completeExercise();
         clearInterval(this.timer);
       }
-    }, 1000);
+    }, step);
   }
 
   onStop(): void {
@@ -41,7 +47,7 @@ export class CurrentTrainingComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.trainingExit.emit();
+        this.trainingService.cancelExercise(this.progress);
       } else {
         this.startTimer();
       }

@@ -9,6 +9,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,8 @@ import { MatInputModule } from '@angular/material/input';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  private authService = inject(AuthService);
+
   formBuilder: FormBuilder = inject(FormBuilder);
   loginForm: FormGroup = this.formBuilder.group({
     email: [
@@ -44,6 +47,9 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    console.log(this.loginForm);
+    this.authService.login({
+      email: this.loginForm.value.email,
+      password: this.loginForm.value.password,
+    });
   }
 }
