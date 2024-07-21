@@ -9,6 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { AuthService } from '../services/auth.service';
+import { LoadingService } from '../../shared/loading.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-signup',
@@ -22,6 +24,7 @@ import { AuthService } from '../services/auth.service';
     MatNativeDateModule,
     MatIconModule,
     MatCheckboxModule,
+    MatProgressSpinnerModule,
     FlexLayoutModule,
   ],
   templateUrl: './signup.component.html',
@@ -31,6 +34,9 @@ export class SignupComponent implements OnInit {
   maxDate!: Date;
 
   private authService = inject(AuthService);
+  private loadingService = inject(LoadingService);
+
+  isLoading = this.loadingService.isLoading;
 
   ngOnInit(): void {
     this.maxDate = new Date();

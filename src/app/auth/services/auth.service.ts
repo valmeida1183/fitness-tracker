@@ -1,51 +1,103 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { User } from '../models/user.model';
-import { AuthData } from '../models/auth-data.model';
 import { Router } from '@angular/router';
+import {
+  Auth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from '@angular/fire/auth';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+import { AuthData } from '../models/auth-data.model';
+import { TrainingService } from '../../training/services/training.service';
+import { LoadingService } from '../../shared/loading.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private user: User | null = null;
+  private isAuthenticated = false;
   isLoggedIn = signal<boolean>(false);
 
+  private fireAuth = inject(Auth);
   private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
+  private trainingService = inject(TrainingService);
+  private loadingService = inject(LoadingService);
 
   registerUser(authData: AuthData): void {
-    this.user = {
-      email: authData.email,
-      userId: Math.round(Math.random() * 10000).toString(),
-    };
+    const { email, password } = authData;
 
-    this.authenticatedSuccessfully();
+    if (!email || !password) {
+      return;
+    }
+
+    this.loadingService.toggleLoading(true);
+
+    createUserWithEmailAndPassword(
+      this.fireAuth,
+      authData.email,
+      authData.password
+    )
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error.message);
+        console.log(error.code);
+        console.log(error.name);
+
+        this.showSnackbar(error.message);
+      })
+      .finally(() => this.loadingService.toggleLoading(false));
   }
 
   login(authData: AuthData): void {
-    this.user = {
-      email: authData.email,
-      userId: Math.round(Math.random() * 10000).toString(),
-    };
+    const { email, password } = authData;
 
-    this.authenticatedSuccessfully();
+    if (!email || !password) {
+      return;
+    }
+
+    this.loadingService.toggleLoading(true);
+
+    signInWithEmailAndPassword(this.fireAuth, authData.email, authData.password)
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error.message);
+        console.log(error.code);
+        console.log(error.name);
+
+        this.showSnackbar(error.message);
+      })
+      .finally(() => this.loadingService.toggleLoading(false));
   }
 
   logout(): void {
-    this.user = null;
-    this.isLoggedIn.set(false);
-    this.router.navigate(['/login']);
+    this.fireAuth.signOut();
   }
 
-  getUser(): User {
-    return { ...this.user } as User;
+  initAuthListener(): void {
+    this.fireAuth.onAuthStateChanged((user) => {
+      if (user) {
+        this.isAuthenticated = true;
+        this.isLoggedIn.set(true);
+        this.router.navigate(['/training']);
+      } else {
+        this.trainingService.cancelSubscriptions();
+        this.isAuthenticated = false;
+        this.isLoggedIn.set(false);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   isAuth(): boolean {
-    return this.user != null;
+    return this.isAuthenticated;
   }
 
-  private authenticatedSuccessfully(): void {
-    this.isLoggedIn.set(true);
-    this.router.navigate(['/training']);
+  private showSnackbar(message: string): void {
+    this.snackBar.open(message, undefined, { duration: 3000 });
   }
 }

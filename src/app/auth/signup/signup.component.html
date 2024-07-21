@@ -65,6 +65,9 @@
       Agree to Terms and Conditions.
     </mat-checkbox>
 
+    @if (isLoading()) {
+    <mat-spinner></mat-spinner>
+    } @else {
     <button
       type="submit"
       mat-raised-button
@@ -73,5 +76,6 @@
     >
       Submit
     </button>
+    }
   </form>
 </section>

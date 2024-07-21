@@ -8,7 +8,8 @@
         <mat-form-field>
           <mat-label>Choose Exercise</mat-label>
           <mat-select formControlName="exercise">
-            @for (exercise of exercises; track exercise.id) {
+            @for (exercise of trainingService.availableExercisesListSignal();
+            track exercise.id) {
             <mat-option [value]="exercise.id">{{ exercise.name }}</mat-option>
             }
           </mat-select>

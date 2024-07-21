@@ -6,7 +6,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { TrainingService } from '../services/training.service';
-import { Exercise } from '../past-training/models/exercise.model';
 import {
   FormBuilder,
   FormGroup,
@@ -29,10 +28,8 @@ import {
   styleUrl: './new-training.component.scss',
 })
 export class NewTrainingComponent implements OnInit {
-  exercises: Exercise[] = [];
-
-  private trainingService = inject(TrainingService);
   private formBuilder = inject(FormBuilder);
+  public trainingService = inject(TrainingService);
 
   //TODO make this a typed form
   form: FormGroup = this.formBuilder.group({
@@ -40,7 +37,8 @@ export class NewTrainingComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.exercises = this.trainingService.getAvailableExercises();
+    //this.exercises = this.trainingService.getAvailableExercises();
+    this.trainingService.fetchAvailableExercises();
   }
 
   onStartTraining(): void {

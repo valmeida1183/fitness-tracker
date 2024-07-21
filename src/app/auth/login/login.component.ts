@@ -10,6 +10,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../services/auth.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { LoadingService } from '../../shared/loading.service';
 
 @Component({
   selector: 'app-login',
@@ -19,6 +21,7 @@ import { AuthService } from '../services/auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatProgressSpinnerModule,
     FlexLayoutModule,
   ],
   templateUrl: './login.component.html',
@@ -26,8 +29,11 @@ import { AuthService } from '../services/auth.service';
 })
 export class LoginComponent {
   private authService = inject(AuthService);
+  private loadingService = inject(LoadingService);
+  private formBuilder: FormBuilder = inject(FormBuilder);
 
-  formBuilder: FormBuilder = inject(FormBuilder);
+  isLoading = this.loadingService.isLoading;
+
   loginForm: FormGroup = this.formBuilder.group({
     email: [
       '',
