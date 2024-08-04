@@ -12,6 +12,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { LoadingService } from '../../shared/loading.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-new-training',
@@ -21,6 +23,7 @@ import {
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
+    MatProgressSpinnerModule,
     FlexLayoutModule,
     ReactiveFormsModule,
   ],
@@ -29,7 +32,14 @@ import {
 })
 export class NewTrainingComponent implements OnInit {
   private formBuilder = inject(FormBuilder);
-  public trainingService = inject(TrainingService);
+  private trainingService = inject(TrainingService);
+  private loadingService = inject(LoadingService);
+
+  availableExercisesListSignal =
+    this.trainingService.availableExercisesListSignal;
+  isLoadingSignal = this.loadingService.isLoading;
+  showReloadExercisesListSignal =
+    this.trainingService.showReloadExercisesListSignal;
 
   //TODO make this a typed form
   form: FormGroup = this.formBuilder.group({
@@ -38,6 +48,10 @@ export class NewTrainingComponent implements OnInit {
 
   ngOnInit(): void {
     //this.exercises = this.trainingService.getAvailableExercises();
+    this.trainingService.fetchAvailableExercises();
+  }
+
+  onFetchExercisesAgain(): void {
     this.trainingService.fetchAvailableExercises();
   }
 

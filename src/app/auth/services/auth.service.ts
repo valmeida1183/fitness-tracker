@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthData } from '../models/auth-data.model';
 import { TrainingService } from '../../training/services/training.service';
 import { LoadingService } from '../../shared/loading.service';
+import { NotificationService } from '../../shared/notification.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,7 @@ export class AuthService {
   private snackBar = inject(MatSnackBar);
   private trainingService = inject(TrainingService);
   private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
 
   registerUser(authData: AuthData): void {
     const { email, password } = authData;
@@ -46,7 +48,7 @@ export class AuthService {
         console.log(error.code);
         console.log(error.name);
 
-        this.showSnackbar(error.message);
+        this.notificationService.showSnackBar(error.message, null, 3000);
       })
       .finally(() => this.loadingService.toggleLoading(false));
   }
@@ -69,7 +71,7 @@ export class AuthService {
         console.log(error.code);
         console.log(error.name);
 
-        this.showSnackbar(error.message);
+        this.notificationService.showSnackBar(error.message, null, 3000);
       })
       .finally(() => this.loadingService.toggleLoading(false));
   }
@@ -95,9 +97,5 @@ export class AuthService {
 
   isAuth(): boolean {
     return this.isAuthenticated;
-  }
-
-  private showSnackbar(message: string): void {
-    this.snackBar.open(message, undefined, { duration: 3000 });
   }
 }

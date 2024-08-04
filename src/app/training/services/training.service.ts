@@ -9,7 +9,9 @@ import {
   Firestore,
   Timestamp,
 } from '@angular/fire/firestore';
-import { map, Subscription } from 'rxjs';
+import { concatMap, finalize, map, Subscription, throwError } from 'rxjs';
+import { LoadingService } from '../../shared/loading.service';
+import { NotificationService } from '../../shared/notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class TrainingService {
@@ -19,6 +21,9 @@ export class TrainingService {
   private finishedExercises = signal<Exercise[]>([]);
   private availableExercises = signal<Exercise[]>([]);
   private runningExercise: Exercise | undefined;
+  private showReloadExercisesList = signal<boolean>(false);
+
+  showReloadExercisesListSignal = this.showReloadExercisesList.asReadonly();
 
   exerciseChangedSignal = computed<Exercise | undefined>(() =>
     this.runningExerciseSignal()
@@ -39,7 +44,8 @@ export class TrainingService {
   private serviceSubscription = new Subscription();
 
   private firestore = inject(Firestore);
-  private injector = inject(Injector);
+  private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
 
   cancelSubscriptions(): void {
     console.log('cancelSubscriptions  was called!!!');
@@ -52,14 +58,27 @@ export class TrainingService {
       'availableExercises'
     );
 
+    this.loadingService.toggleLoading(true);
     const subscription = collectionChanges(availableExercisesCollection)
       .pipe(
         map((docArray) => {
           return docArray.map(this.convertDocChangeToExercise);
-        })
+        }),
+        finalize(() => this.loadingService.toggleLoading(false))
       )
-      .subscribe((exercises: Exercise[]) => {
-        this.availableExercises.set(exercises);
+      .subscribe({
+        next: (exercises: Exercise[]) => {
+          this.availableExercises.set(exercises);
+          this.showReloadExercisesList.set(false);
+          this.loadingService.toggleLoading(false);
+        },
+        error: (_) => {
+          const errorHandledMsg =
+            'Fetching Exercises failed, please try again later';
+          this.notificationService.showSnackBar(errorHandledMsg);
+          this.showReloadExercisesList.set(true);
+          this.loadingService.toggleLoading(false);
+        },
       });
 
     this.serviceSubscription.add(subscription);

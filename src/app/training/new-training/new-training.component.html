@@ -5,20 +5,36 @@
         <mat-card-title>Time to start a workout!</mat-card-title>
       </mat-card-header>
       <mat-card-content fxLayoutAlign="center">
+        @if (isLoadingSignal()) {
+        <div class="spinner-wrapper" fxLayoutAlign="center">
+          <mat-spinner></mat-spinner>
+        </div>
+        } @else if(!showReloadExercisesListSignal()) {
         <mat-form-field>
           <mat-label>Choose Exercise</mat-label>
           <mat-select formControlName="exercise">
-            @for (exercise of trainingService.availableExercisesListSignal();
-            track exercise.id) {
+            @for (exercise of availableExercisesListSignal(); track exercise.id)
+            {
             <mat-option [value]="exercise.id">{{ exercise.name }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
+        }
       </mat-card-content>
       <mat-card-actions fxLayoutAlign="center">
-        <button type="submit" mat-button [disabled]="form.invalid">
+        @if (showReloadExercisesListSignal()) {
+        <button type="button" mat-button (click)="onFetchExercisesAgain()">
+          Fetch Again
+        </button>
+        } @else {
+        <button
+          type="submit"
+          mat-button
+          [disabled]="form.invalid || isLoadingSignal()"
+        >
           Start
         </button>
+        }
       </mat-card-actions>
     </mat-card>
   </form>
