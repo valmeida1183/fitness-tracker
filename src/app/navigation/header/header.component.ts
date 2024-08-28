@@ -1,10 +1,11 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, inject, OnInit, output } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/services/auth.service';
+import { AuthStore } from '../../auth/store/auth.store';
 
 @Component({
   selector: 'app-header',
@@ -21,7 +22,11 @@ import { AuthService } from '../../auth/services/auth.service';
 })
 export class HeaderComponent {
   sidenavToggle = output<void>();
-  authService = inject(AuthService);
+
+  private authService = inject(AuthService);
+  private authStore = inject(AuthStore);
+
+  isAuthenticated = this.authStore.isAuthenticated;
 
   onLogout(): void {
     this.authService.logout();

@@ -16,6 +16,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 
 import { Exercise } from './models/exercise.model';
 import { TrainingService } from '../services/training.service';
+import { TrainingStore } from '../store/training.store';
 
 @Component({
   selector: 'app-past-training',
@@ -33,6 +34,9 @@ import { TrainingService } from '../services/training.service';
   styleUrl: './past-training.component.scss',
 })
 export class PastTrainingComponent implements OnInit, AfterViewInit {
+  sort = viewChild<MatSort>(MatSort);
+  paginator = viewChild<MatPaginator>(MatPaginator);
+
   displayedColumns: string[] = [
     'date',
     'name',
@@ -41,10 +45,9 @@ export class PastTrainingComponent implements OnInit, AfterViewInit {
     'state',
   ];
   dataSource = new MatTableDataSource<Exercise>();
-  sort = viewChild<MatSort>(MatSort);
-  paginator = viewChild<MatPaginator>(MatPaginator);
 
   private trainingService = inject(TrainingService);
+  private trainingStore = inject(TrainingStore);
 
   constructor() {
     // Se usar effect ou ngAfterViewInit é o mesmo resultado.
@@ -54,8 +57,7 @@ export class PastTrainingComponent implements OnInit, AfterViewInit {
     });
 
     effect(() => {
-      const finishedExercises =
-        this.trainingService.finishedExercisesListSignal() ?? [];
+      const finishedExercises = this.trainingStore.finishedExercises();
       this.dataSource.data = finishedExercises;
     });
   }

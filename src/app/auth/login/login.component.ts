@@ -11,7 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../services/auth.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LoadingService } from '../../shared/loading.service';
+import { AppGlobalStore } from '../../shared/store/app-global.store';
 
 @Component({
   selector: 'app-login',
@@ -29,10 +29,10 @@ import { LoadingService } from '../../shared/loading.service';
 })
 export class LoginComponent {
   private authService = inject(AuthService);
-  private loadingService = inject(LoadingService);
+  private appGlobalStore = inject(AppGlobalStore);
   private formBuilder: FormBuilder = inject(FormBuilder);
 
-  isLoading = this.loadingService.isLoading;
+  isLoading = this.appGlobalStore.isLoading;
 
   loginForm: FormGroup = this.formBuilder.group({
     email: [

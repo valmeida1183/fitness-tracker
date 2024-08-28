@@ -1,5 +1,5 @@
 <mat-nav-list>
-  @if (authService.isLoggedIn()) {
+  @if (isAuthenticated()) {
   <a mat-list-item routerLink="/training" (click)="onCloseSidenav()">
     <mat-icon>fitness_center</mat-icon>
     <span class="nav-caption">Training</span>

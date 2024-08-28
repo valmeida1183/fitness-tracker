@@ -9,12 +9,11 @@
         <div class="spinner-wrapper" fxLayoutAlign="center">
           <mat-spinner></mat-spinner>
         </div>
-        } @else if(!showReloadExercisesListSignal()) {
+        } @else if(!showReloadExercisesList()) {
         <mat-form-field>
           <mat-label>Choose Exercise</mat-label>
           <mat-select formControlName="exercise">
-            @for (exercise of availableExercisesListSignal(); track exercise.id)
-            {
+            @for (exercise of availableExercisesList(); track exercise.id) {
             <mat-option [value]="exercise.id">{{ exercise.name }}</mat-option>
             }
           </mat-select>
@@ -22,7 +21,7 @@
         }
       </mat-card-content>
       <mat-card-actions fxLayoutAlign="center">
-        @if (showReloadExercisesListSignal()) {
+        @if (showReloadExercisesList()) {
         <button type="button" mat-button (click)="onFetchExercisesAgain()">
           Fetch Again
         </button>

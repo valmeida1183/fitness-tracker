@@ -5,26 +5,23 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from '@angular/fire/auth';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AuthData } from '../models/auth-data.model';
 import { TrainingService } from '../../training/services/training.service';
-import { LoadingService } from '../../shared/loading.service';
-import { NotificationService } from '../../shared/notification.service';
+import { NotificationService } from '../../shared/services/notification.service';
+import { AppGlobalStore } from '../../shared/store/app-global.store';
+import { AuthStore } from '../store/auth.store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private isAuthenticated = false;
-  isLoggedIn = signal<boolean>(false);
-
   private fireAuth = inject(Auth);
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
   private trainingService = inject(TrainingService);
-  private loadingService = inject(LoadingService);
   private notificationService = inject(NotificationService);
+  private appGlobalStore = inject(AppGlobalStore);
+  private authStore = inject(AuthStore);
 
   registerUser(authData: AuthData): void {
     const { email, password } = authData;
@@ -33,7 +30,7 @@ export class AuthService {
       return;
     }
 
-    this.loadingService.toggleLoading(true);
+    this.appGlobalStore.startLoading();
 
     createUserWithEmailAndPassword(
       this.fireAuth,
@@ -50,7 +47,7 @@ export class AuthService {
 
         this.notificationService.showSnackBar(error.message, null, 3000);
       })
-      .finally(() => this.loadingService.toggleLoading(false));
+      .finally(() => this.appGlobalStore.stopLoading());
   }
 
   login(authData: AuthData): void {
@@ -60,7 +57,7 @@ export class AuthService {
       return;
     }
 
-    this.loadingService.toggleLoading(true);
+    this.appGlobalStore.startLoading();
 
     signInWithEmailAndPassword(this.fireAuth, authData.email, authData.password)
       .then((response) => {
@@ -73,7 +70,7 @@ export class AuthService {
 
         this.notificationService.showSnackBar(error.message, null, 3000);
       })
-      .finally(() => this.loadingService.toggleLoading(false));
+      .finally(() => this.appGlobalStore.stopLoading());
   }
 
   logout(): void {
@@ -83,19 +80,13 @@ export class AuthService {
   initAuthListener(): void {
     this.fireAuth.onAuthStateChanged((user) => {
       if (user) {
-        this.isAuthenticated = true;
-        this.isLoggedIn.set(true);
+        this.authStore.setAuthenticated();
         this.router.navigate(['/training']);
       } else {
         this.trainingService.cancelSubscriptions();
-        this.isAuthenticated = false;
-        this.isLoggedIn.set(false);
+        this.authStore.setUnauthenticated();
         this.router.navigate(['/login']);
       }
     });
-  }
-
-  isAuth(): boolean {
-    return this.isAuthenticated;
   }
 }

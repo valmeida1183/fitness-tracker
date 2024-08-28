@@ -6,6 +6,8 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { StopTrainingDialogComponent } from './stop-training-dialog/stop-training-dialog.component';
 import { TrainingService } from '../services/training.service';
+import { TrainingStore } from '../store/training.store';
+import { Exercise } from '../past-training/models/exercise.model';
 
 @Component({
   selector: 'app-current-training',
@@ -18,15 +20,16 @@ export class CurrentTrainingComponent implements OnInit {
   progress = 0;
   timer!: any;
 
-  private readonly dialog = inject(MatDialog);
-  private readonly trainingService = inject(TrainingService);
+  private dialog = inject(MatDialog);
+  private trainingService = inject(TrainingService);
+  private trainingStore = inject(TrainingStore);
 
   ngOnInit(): void {
     this.startTimer();
   }
 
   startTimer(): void {
-    const { duration } = this.trainingService.getRunningExercise();
+    const { duration } = this.trainingStore.runningExercise() as Exercise;
     const step = (duration / 100) * 1000;
 
     this.timer = setInterval(() => {

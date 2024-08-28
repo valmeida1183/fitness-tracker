@@ -1,27 +1,24 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, CanMatchFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthStore } from '../store/auth.store';
 
 export const authGuard: CanActivateFn = (route, state) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
-
-  if (authService.isAuth()) {
-    return true;
-  }
-
-  router.navigate(['/login']);
-  return false;
+  return navigateIfAuthenticated();
 };
 
 export const authMatchGuard: CanMatchFn = (route, state) => {
-  const authService = inject(AuthService);
+  return navigateIfAuthenticated();
+};
+
+const navigateIfAuthenticated = () => {
+  const authStore = inject(AuthStore);
   const router = inject(Router);
 
-  if (authService.isAuth()) {
-    return true;
+  const isAuthenticated = authStore.isAuthenticated();
+  if (!isAuthenticated) {
+    router.navigate(['/login']);
+    return false;
   }
 
-  router.navigate(['/login']);
-  return false;
+  return true;
 };

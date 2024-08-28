@@ -3,7 +3,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { NewTrainingComponent } from './new-training/new-training.component';
 import { PastTrainingComponent } from './past-training/past-training.component';
 import { CurrentTrainingComponent } from './current-training/current-training.component';
-import { TrainingService } from './services/training.service';
+import { TrainingStore } from './store/training.store';
 
 @Component({
   selector: 'app-training',
@@ -18,7 +18,7 @@ import { TrainingService } from './services/training.service';
   styleUrl: './training.component.scss',
 })
 export class TrainingComponent implements OnInit {
-  public trainingService = inject(TrainingService);
+  trainingStore = inject(TrainingStore);
 
   ngOnInit(): void {}
 }

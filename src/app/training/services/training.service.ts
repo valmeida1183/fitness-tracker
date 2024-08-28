@@ -1,4 +1,4 @@
-import { Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Exercise } from '../past-training/models/exercise.model';
 import {
   addDoc,
@@ -9,43 +9,19 @@ import {
   Firestore,
   Timestamp,
 } from '@angular/fire/firestore';
-import { concatMap, finalize, map, Subscription, throwError } from 'rxjs';
-import { LoadingService } from '../../shared/loading.service';
-import { NotificationService } from '../../shared/notification.service';
+import { finalize, map, Subscription } from 'rxjs';
+import { NotificationService } from '../../shared/services/notification.service';
+import { AppGlobalStore } from '../../shared/store/app-global.store';
+import { TrainingStore } from '../store/training.store';
 
 @Injectable({ providedIn: 'root' })
 export class TrainingService {
-  private readonly runningExerciseSignal = signal<Exercise | undefined>(
-    undefined
-  );
-  private finishedExercises = signal<Exercise[]>([]);
-  private availableExercises = signal<Exercise[]>([]);
-  private runningExercise: Exercise | undefined;
-  private showReloadExercisesList = signal<boolean>(false);
-
-  showReloadExercisesListSignal = this.showReloadExercisesList.asReadonly();
-
-  exerciseChangedSignal = computed<Exercise | undefined>(() =>
-    this.runningExerciseSignal()
-  );
-
-  finishedExercisesListSignal = computed<Exercise[] | undefined>(() =>
-    this.finishedExercises()
-  );
-
-  availableExercisesListSignal = computed<Exercise[] | undefined>(() =>
-    this.availableExercises()
-  );
-
-  ongoingTrainingSignal = computed<boolean>(() => {
-    return this.runningExerciseSignal() ? true : false;
-  });
+  private firestore = inject(Firestore);
+  private appGlobalStore = inject(AppGlobalStore);
+  private trainingStore = inject(TrainingStore);
+  private notificationService = inject(NotificationService);
 
   private serviceSubscription = new Subscription();
-
-  private firestore = inject(Firestore);
-  private loadingService = inject(LoadingService);
-  private notificationService = inject(NotificationService);
 
   cancelSubscriptions(): void {
     console.log('cancelSubscriptions  was called!!!');
@@ -58,34 +34,30 @@ export class TrainingService {
       'availableExercises'
     );
 
-    this.loadingService.toggleLoading(true);
+    this.appGlobalStore.startLoading();
     const subscription = collectionChanges(availableExercisesCollection)
       .pipe(
         map((docArray) => {
           return docArray.map(this.convertDocChangeToExercise);
         }),
-        finalize(() => this.loadingService.toggleLoading(false))
+        finalize(() => this.appGlobalStore.stopLoading())
       )
       .subscribe({
         next: (exercises: Exercise[]) => {
-          this.availableExercises.set(exercises);
-          this.showReloadExercisesList.set(false);
-          this.loadingService.toggleLoading(false);
+          this.trainingStore.setAvailableExercises(exercises);
+          this.trainingStore.setShowReloadExercises(false);
+          this.appGlobalStore.stopLoading();
         },
         error: (_) => {
           const errorHandledMsg =
             'Fetching Exercises failed, please try again later';
           this.notificationService.showSnackBar(errorHandledMsg);
-          this.showReloadExercisesList.set(true);
-          this.loadingService.toggleLoading(false);
+          this.trainingStore.setShowReloadExercises(true);
+          this.appGlobalStore.stopLoading();
         },
       });
 
     this.serviceSubscription.add(subscription);
-  }
-
-  getRunningExercise(): Exercise {
-    return { ...this.runningExercise } as Exercise;
   }
 
   fetchCompletedOrCanceledExercises(): void {
@@ -106,7 +78,7 @@ export class TrainingService {
       )
       .subscribe({
         next: (exercises: Exercise[]) => {
-          this.finishedExercises.set(exercises);
+          this.mergeFinishedExercises(exercises);
         },
       });
 
@@ -118,40 +90,44 @@ export class TrainingService {
     // const ref = doc(this.firestore, `availableExercises/${selectedId}`);
     // updateDoc(ref, {})
 
-    const selectedExercise = this.availableExercises()?.find(
-      (ex) => ex.id === selectedId
-    );
+    const selectedExercise = this.trainingStore
+      .availableExercises()
+      .find((exercise) => exercise.id === selectedId);
 
     if (selectedExercise) {
-      this.runningExercise = selectedExercise;
-      this.runningExerciseSignal.set({ ...this.runningExercise });
+      this.trainingStore.startExercise(selectedExercise);
     }
   }
 
   completeExercise(): void {
-    if (this.runningExercise) {
-      this.addDataToDatabase({
-        ...this.runningExercise,
-        date: new Date(),
-        state: 'completed',
-      });
-      this.runningExercise = undefined;
-      this.runningExerciseSignal.set(undefined);
+    const runningExercise = this.trainingStore.runningExercise();
+    if (!runningExercise) {
+      return;
     }
+
+    this.addDataToDatabase({
+      ...runningExercise,
+      date: new Date(),
+      state: 'completed',
+    });
+    this.trainingStore.stopExercise();
   }
 
   cancelExercise(progress: number): void {
-    if (this.runningExercise) {
-      this.addDataToDatabase({
-        ...this.runningExercise,
-        duration: this.runningExercise.duration * (progress / 100),
-        calories: this.runningExercise.calories * (progress / 100),
-        date: new Date(),
-        state: 'cancelled',
-      });
-      this.runningExercise = undefined;
-      this.runningExerciseSignal.set(undefined);
+    const runningExercise = this.trainingStore.runningExercise();
+    if (!runningExercise) {
+      return;
     }
+
+    this.addDataToDatabase({
+      ...runningExercise,
+      duration: runningExercise.duration * (progress / 100),
+      calories: runningExercise.calories * (progress / 100),
+      date: new Date(),
+      state: 'cancelled',
+    });
+
+    this.trainingStore.stopExercise();
   }
 
   private addDataToDatabase(exercise: Exercise): void {
@@ -171,9 +147,25 @@ export class TrainingService {
     const { date } = data;
 
     return {
-      id,
       ...data,
+      id,
       date: date instanceof Timestamp ? date.toDate() : undefined,
     } as Exercise;
+  }
+
+  private mergeFinishedExercises(exercises: Exercise[]) {
+    const finishedExercisesMap = new Map<string, Exercise>();
+    const currentFinishedExercises = this.trainingStore.finishedExercises();
+
+    currentFinishedExercises.forEach((exercise) =>
+      finishedExercisesMap.set(exercise.id, exercise)
+    );
+
+    exercises.forEach((exercise) =>
+      finishedExercisesMap.set(exercise.id, exercise)
+    );
+
+    const mergedFinishedExercises = Array.from(finishedExercisesMap.values());
+    this.trainingStore.setFinishedExercises(mergedFinishedExercises);
   }
 }
